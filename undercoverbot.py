@@ -444,7 +444,7 @@ class vote_button(discord.ui.View):
 async def undercover(interaction: discord.Interaction):
     undercover_player_dict[interaction.guild.id] = [interaction.user.id]
     player_str = '\n'.join(f'<@{pid}>' for pid in undercover_player_dict[interaction.guild.id])
-    undercover_embed = discord.Embed(title="誰是臥底?")
+    undercover_embed = discord.Embed(title="誰是臥底？")
     undercover_embed.add_field(name='房主', value=interaction.user.name, inline=False)
     undercover_embed.add_field(name='玩家', value=player_str, inline=False)
     undercover_embed.set_footer(text='白板模式：關')
