@@ -110,15 +110,15 @@ def player_embed(playerlist):
 def spy_victory(spy_name, spy_word, civilian_word):
     end = discord.Embed(title='遊戲結束')
     end.add_field(name='臥底獲勝', value=f'臥底{spy_name}沒有被淘汰。')
-    end.add_field(name=f'平民詞彙是{civilian_word}', value='')
-    end.add_field(name=f'臥底詞彙是{spy_word}', value='')
+    end.add_field(name=f'平民詞彙是：{civilian_word}', value='', inline=False)
+    end.add_field(name=f'臥底詞彙是：{spy_word}', value='', inline=False)
     return end
 
 def civilian_victory(spy_name, spy_word, civilian_word):
     end = discord.Embed(title='遊戲結束')
     end.add_field(name='平民獲勝', value=f'臥底{spy_name}已被淘汰。')
-    end.add_field(name=f'平民詞彙是{civilian_word}', value='')
-    end.add_field(name=f'臥底詞彙是{spy_word}', value='')
+    end.add_field(name=f'平民詞彙是：{civilian_word}', value='', inline=False)
+    end.add_field(name=f'臥底詞彙是：{spy_word}', value='', inline=False)
     return end
 
 class start_button(discord.ui.View):
@@ -175,6 +175,7 @@ class start_button(discord.ui.View):
             random.shuffle(playerlist)
 
             undercover_order_dict[interaction.guild.id] = playerlist
+            vote_active_dict[interaction.guild.id] = 0
             
             playerembed = player_embed(undercover_order_dict[interaction.guild.id])
             await interaction.response.send_message(embed=playerembed)
@@ -392,10 +393,9 @@ class vote_button(discord.ui.View):
         vote_result_embed.add_field(name='', value=result)
         
         if len(highest_voted_player) > 1:
-            await self.channel.send(embed=vote_result_embed)
-
             continue_embed = player_embed(undercover_order_dict[self.guild.id])
-            await self.channel.send(embed=continue_embed)
+            await self.channel.send(embeds=[vote_result_embed, continue_embed])
+            vote_active_dict[self.guild.id] = 0
 
         #game over
         elif highest_voted_player[0] == undercover_spy_dict[self.guild.id]:
@@ -410,10 +410,11 @@ class vote_button(discord.ui.View):
             del undercover_spy_dict[self.guild.id]
             del undercover_word_dict[self.guild.id]
             undercover_whiteboard_dict.pop(self.guild.id, None)
-            await self.channel.send(embed=[vote_result_embed, end_embed])
+            await self.channel.send(embeds=[vote_result_embed, end_embed])
+            vote_active_dict.pop(self.guild.id, None)
 
         #game over
-        elif highest_voted_player[0] in undercover_order_dict[self.guild.id] and len(undercover_order_dict[self.guild.id]) == 3:
+        elif highest_voted_player[0] in undercover_order_dict[self.guild.id] and len(undercover_order_dict[self.guild.id]) == 3 or len(undercover_order_dict[self.guild.id]) == 2:
             undercover_order_dict[self.guild.id].remove(highest_voted_player[0])
             spy = await self.guild.fetch_member(undercover_spy_dict[self.guild.id])
             spy_name = spy.display_name
@@ -426,7 +427,8 @@ class vote_button(discord.ui.View):
             del undercover_spy_dict[self.guild.id]
             del undercover_word_dict[self.guild.id]
             undercover_whiteboard_dict.pop(self.guild.id, None)
-            await self.channel.send(embed=[vote_result_embed, end_embed])
+            await self.channel.send(embeds=[vote_result_embed, end_embed])
+            vote_active_dict[self.guild.id] = 0
 
         else:
             vote_result_embed = discord.Embed(title='投票結果')
@@ -434,10 +436,9 @@ class vote_button(discord.ui.View):
             vote_result_embed.add_field(name='', value=result, inline=False)
             vote_result_embed.add_field(name='', value=f'<@{highest_voted_player[0]}>被淘汰了！', inline=False)
             undercover_order_dict[self.guild.id].remove(highest_voted_player[0])
-            await self.channel.send(embed=vote_result_embed)
-
             continue_embed = player_embed(undercover_order_dict[self.guild.id])
-            await self.channel.send(embed=continue_embed)
+            await self.channel.send(embeds=[vote_result_embed, continue_embed])
+            vote_active_dict[self.guild.id] = 0
 
 @client.tree.command(name='臥底', description='建立一個誰是臥底遊戲', guild=guild)
 async def undercover(interaction: discord.Interaction):
