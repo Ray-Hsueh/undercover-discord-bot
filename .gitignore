@@ -1,5 +1,6 @@
 .env
-verbdata/
+verbdata/*.json
+!verbdata/default.json
 __pycache__/
 *.pyc
 *.pyo
